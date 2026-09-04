@@ -1,29 +1,22 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { useSettings } from '../context/SettingsContext';
+import { useSettings, useTheme } from '../context/SettingsContext';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { UnitPickerScreen } from '../screens/UnitPickerScreen';
 import { WorkoutScreen } from '../screens/WorkoutScreen';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const headerOptions = {
-  headerStyle: { backgroundColor: theme.colors.background },
-  headerShadowVisible: false,
-  headerTintColor: theme.colors.foreground,
-  headerTitleStyle: {
-    fontFamily: theme.fonts.serif,
-    fontSize: theme.fontSizes.lg,
-  },
-  contentStyle: { backgroundColor: theme.colors.background },
-};
-
 function SettingsButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <Pressable onPress={onPress} hitSlop={12} style={styles.settingsBtn}>
       <Text style={styles.settingsText}>Settings</Text>
@@ -32,14 +25,41 @@ function SettingsButton({ onPress }: { onPress: () => void }) {
 }
 
 export function RootNavigator() {
-  const { ready, unitsChosen } = useSettings();
+  const { unitsChosen, theme } = useSettings();
 
-  if (!ready) {
-    return null;
-  }
+  const navigationTheme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      dark: theme.colorScheme === 'dark',
+      colors: {
+        ...DefaultTheme.colors,
+        primary: theme.colors.accent,
+        background: theme.colors.background,
+        card: theme.colors.background,
+        text: theme.colors.foreground,
+        border: theme.colors.border,
+        notification: theme.colors.accent,
+      },
+    }),
+    [theme]
+  );
+
+  const headerOptions = useMemo(
+    () => ({
+      headerStyle: { backgroundColor: theme.colors.background },
+      headerShadowVisible: false,
+      headerTintColor: theme.colors.foreground,
+      headerTitleStyle: {
+        fontFamily: theme.fonts.serif,
+        fontSize: theme.fontSizes.lg,
+      },
+      contentStyle: { backgroundColor: theme.colors.background },
+    }),
+    [theme]
+  );
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator screenOptions={headerOptions}>
         {!unitsChosen ? (
           <Stack.Screen
@@ -76,13 +96,15 @@ export function RootNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
-  settingsBtn: {
-    paddingHorizontal: 4,
-  },
-  settingsText: {
-    fontFamily: theme.fonts.sansMedium,
-    fontSize: theme.fontSizes.sm,
-    color: theme.colors.accent,
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    settingsBtn: {
+      paddingHorizontal: 4,
+    },
+    settingsText: {
+      fontFamily: theme.fonts.sansMedium,
+      fontSize: theme.fontSizes.sm,
+      color: theme.colors.accent,
+    },
+  });
+}

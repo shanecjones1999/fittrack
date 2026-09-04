@@ -3,7 +3,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { createId } from './id';
 import { SEEDED_EXERCISES } from './seed';
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 export async function migrateDb(db: SQLiteDatabase): Promise<void> {
   await db.execAsync('PRAGMA foreign_keys = ON;');
@@ -90,6 +90,12 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
 
       CREATE INDEX IF NOT EXISTS idx_locations_sort
         ON locations(sort_order ASC, name COLLATE NOCASE ASC);
+    `);
+  }
+
+  if (current < 3) {
+    await db.execAsync(`
+      ALTER TABLE workout_days ADD COLUMN energy_level INTEGER;
     `);
   }
 

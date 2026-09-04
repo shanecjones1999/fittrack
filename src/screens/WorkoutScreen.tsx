@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +14,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { SetRow } from '../components/SetRow';
-import { useSettings } from '../context/SettingsContext';
+import { useSettings, useTheme } from '../context/SettingsContext';
 import {
   addCatalogEntry,
   bumpCatalogUsage,
@@ -40,7 +40,7 @@ import type {
   WorkoutDay,
 } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 import { formatWorkoutDateTitle } from '../utils/date';
 
 const LABEL_PRESETS = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full'];
@@ -50,7 +50,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Workout'>;
 export function WorkoutScreen({ navigation, route }: Props) {
   const { workoutId } = route.params;
   const db = useSQLiteContext();
-  const { weightUnit } = useSettings();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { weightUnit, trackEnergyLevel } = useSettings();
   const unit = weightUnit ?? 'lbs';
 
   const [workout, setWorkout] = useState<WorkoutDay | null>(null);
@@ -96,7 +98,9 @@ export function WorkoutScreen({ navigation, route }: Props) {
   }, [db, exerciseQuery, showTypeahead]);
 
   const persistPatch = async (
-    patch: Partial<Pick<WorkoutDay, 'label' | 'location' | 'notes' | 'date'>>
+    patch: Partial<
+      Pick<WorkoutDay, 'label' | 'location' | 'energyLevel' | 'notes' | 'date'>
+    >
   ) => {
     await updateWorkout(db, workoutId, patch);
     await load();
@@ -392,6 +396,43 @@ export function WorkoutScreen({ navigation, route }: Props) {
           />
         ) : null}
 
+        {trackEnergyLevel ? (
+          <>
+            <Text style={styles.sectionLabel}>Energy</Text>
+            <View style={styles.energyBar}>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((level) => {
+                const selected = workout.energyLevel === level;
+                return (
+                  <Pressable
+                    key={level}
+                    onPress={() =>
+                      void persistPatch({
+                        energyLevel: selected ? null : level,
+                      })
+                    }
+                    style={[
+                      styles.energySegment,
+                      selected && styles.energySegmentSelected,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Energy level ${level}`}
+                    accessibilityState={{ selected }}
+                  >
+                    <Text
+                      style={[
+                        styles.energySegmentText,
+                        selected && styles.energySegmentTextSelected,
+                      ]}
+                    >
+                      {level}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
+
         <View style={styles.divider} />
 
         <Text style={styles.sectionLabel}>Exercises</Text>
@@ -543,7 +584,8 @@ export function WorkoutScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -594,6 +636,30 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.md,
     color: theme.colors.foreground,
     marginBottom: theme.spacing.lg,
+  },
+  energyBar: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: theme.spacing.lg,
+  },
+  energySegment: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.muted,
+  },
+  energySegmentSelected: {
+    backgroundColor: theme.colors.accent,
+  },
+  energySegmentText: {
+    fontFamily: theme.fonts.monoMedium,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.foreground,
+  },
+  energySegmentTextSelected: {
+    color: theme.colors.accentForeground,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -724,3 +790,4 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
 });
+}

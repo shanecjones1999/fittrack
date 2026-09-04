@@ -1,5 +1,5 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
   Lora_400Regular,
@@ -17,10 +17,32 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SQLiteProvider } from 'expo-sqlite';
 
-import { SettingsProvider } from './src/context/SettingsContext';
+import { SettingsProvider, useSettings } from './src/context/SettingsContext';
 import { migrateDb } from './src/db/migrate';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { theme } from './src/theme';
+import { theme as bootTheme } from './src/theme';
+
+function AppChrome() {
+  const { ready, theme } = useSettings();
+
+  if (!ready) {
+    return (
+      <View
+        style={[styles.boot, { backgroundColor: theme.colors.background }]}
+      >
+        <ActivityIndicator color={theme.colors.accent} />
+        <StatusBar style={theme.colorScheme === 'dark' ? 'light' : 'dark'} />
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <RootNavigator />
+      <StatusBar style={theme.colorScheme === 'dark' ? 'light' : 'dark'} />
+    </>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -35,8 +57,10 @@ export default function App() {
 
   if (!fontsLoaded) {
     return (
-      <View style={styles.boot}>
-        <ActivityIndicator color={theme.colors.accent} />
+      <View
+        style={[styles.boot, { backgroundColor: bootTheme.colors.background }]}
+      >
+        <ActivityIndicator color={bootTheme.colors.accent} />
       </View>
     );
   }
@@ -45,8 +69,7 @@ export default function App() {
     <SafeAreaProvider>
       <SQLiteProvider databaseName="fittrack.db" onInit={migrateDb}>
         <SettingsProvider>
-          <RootNavigator />
-          <StatusBar style="dark" />
+          <AppChrome />
         </SettingsProvider>
       </SQLiteProvider>
     </SafeAreaProvider>
@@ -58,6 +81,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
 });

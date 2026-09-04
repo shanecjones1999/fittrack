@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { useSettings } from '../context/SettingsContext';
+import { useSettings, useTheme } from '../context/SettingsContext';
 import type { WeightUnit } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UnitPicker'>;
 
@@ -14,6 +15,8 @@ const UNITS: { unit: WeightUnit; blurb: string }[] = [
 ];
 
 export function UnitPickerScreen(_props: Props) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { chooseUnit } = useSettings();
 
   return (
@@ -41,7 +44,8 @@ export function UnitPickerScreen(_props: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -93,3 +97,4 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedForeground,
   },
 });
+}

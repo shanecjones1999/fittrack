@@ -9,14 +9,25 @@ import {
 } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 
-import { getSettings, setWeightUnit as persistWeightUnit } from '../db/settings';
-import type { WeightUnit } from '../db/types';
+import {
+  getSettings,
+  setColorScheme as persistColorScheme,
+  setTrackEnergyLevel as persistTrackEnergyLevel,
+  setWeightUnit as persistWeightUnit,
+} from '../db/settings';
+import type { ColorScheme, WeightUnit } from '../db/types';
+import { createTheme, type AppTheme } from '../theme';
 
 type SettingsContextValue = {
   ready: boolean;
   unitsChosen: boolean;
   weightUnit: WeightUnit | null;
+  trackEnergyLevel: boolean;
+  colorScheme: ColorScheme;
+  theme: AppTheme;
   chooseUnit: (unit: WeightUnit) => Promise<void>;
+  setTrackEnergyLevel: (enabled: boolean) => Promise<void>;
+  setColorScheme: (scheme: ColorScheme) => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -27,11 +38,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [unitsChosen, setUnitsChosen] = useState(false);
   const [weightUnit, setWeightUnit] = useState<WeightUnit | null>(null);
+  const [trackEnergyLevel, setTrackEnergyLevelState] = useState(false);
+  const [colorScheme, setColorSchemeState] = useState<ColorScheme>('light');
 
   const refresh = useCallback(async () => {
     const settings = await getSettings(db);
     setUnitsChosen(settings.unitsChosen);
     setWeightUnit(settings.weightUnit);
+    setTrackEnergyLevelState(settings.trackEnergyLevel);
+    setColorSchemeState(settings.colorScheme);
     setReady(true);
   }, [db]);
 
@@ -48,9 +63,49 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [db]
   );
 
+  const setTrackEnergyLevel = useCallback(
+    async (enabled: boolean) => {
+      await persistTrackEnergyLevel(db, enabled);
+      setTrackEnergyLevelState(enabled);
+    },
+    [db]
+  );
+
+  const setColorScheme = useCallback(
+    async (scheme: ColorScheme) => {
+      await persistColorScheme(db, scheme);
+      setColorSchemeState(scheme);
+    },
+    [db]
+  );
+
+  const theme = useMemo(() => createTheme(colorScheme), [colorScheme]);
+
   const value = useMemo(
-    () => ({ ready, unitsChosen, weightUnit, chooseUnit, refresh }),
-    [ready, unitsChosen, weightUnit, chooseUnit, refresh]
+    () => ({
+      ready,
+      unitsChosen,
+      weightUnit,
+      trackEnergyLevel,
+      colorScheme,
+      theme,
+      chooseUnit,
+      setTrackEnergyLevel,
+      setColorScheme,
+      refresh,
+    }),
+    [
+      ready,
+      unitsChosen,
+      weightUnit,
+      trackEnergyLevel,
+      colorScheme,
+      theme,
+      chooseUnit,
+      setTrackEnergyLevel,
+      setColorScheme,
+      refresh,
+    ]
   );
 
   return (
@@ -64,4 +119,8 @@ export function useSettings(): SettingsContextValue {
     throw new Error('useSettings must be used within SettingsProvider');
   }
   return ctx;
+}
+
+export function useTheme(): AppTheme {
+  return useSettings().theme;
 }

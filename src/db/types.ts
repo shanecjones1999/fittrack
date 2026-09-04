@@ -1,11 +1,14 @@
 export type WeightUnit = 'lbs' | 'kg';
 
+export type ColorScheme = 'light' | 'dark';
+
 export type WorkoutDay = {
   id: string;
   date: string; // YYYY-MM-DD
   startTime: string | null; // HH:MM (24h), optional
   label: string;
   location: string | null;
+  energyLevel: number | null; // 1–10, optional
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -48,6 +51,8 @@ export type SavedLocation = {
 export type AppSettings = {
   weightUnit: WeightUnit | null;
   unitsChosen: boolean;
+  trackEnergyLevel: boolean;
+  colorScheme: ColorScheme;
 };
 
 export type WorkoutDaySummary = WorkoutDay & {

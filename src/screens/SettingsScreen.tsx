@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -12,7 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 
-import { useSettings } from '../context/SettingsContext';
+import { useSettings, useTheme } from '../context/SettingsContext';
 import {
   deleteCatalogEntry,
   listCustomCatalogEntries,
@@ -24,20 +25,34 @@ import {
   listLocations,
 } from '../db/locations';
 import type {
+  ColorScheme,
   ExerciseCatalogEntry,
   SavedLocation,
   WeightUnit,
 } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 const UNITS: WeightUnit[] = ['lbs', 'kg'];
+const SCHEMES: { value: ColorScheme; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
 
 export function SettingsScreen(_props: Props) {
   const db = useSQLiteContext();
-  const { weightUnit, chooseUnit } = useSettings();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const {
+    weightUnit,
+    chooseUnit,
+    trackEnergyLevel,
+    setTrackEnergyLevel,
+    colorScheme,
+    setColorScheme,
+  } = useSettings();
   const [locations, setLocations] = useState<SavedLocation[]>([]);
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogEntry[]>(
     []
@@ -146,6 +161,45 @@ export function SettingsScreen(_props: Props) {
         New sets use this unit. Existing sets keep the unit they were logged with.
       </Text>
 
+      <Text style={[styles.sectionLabel, styles.sectionGap]}>Appearance</Text>
+      <View style={styles.row}>
+        {SCHEMES.map(({ value, label }) => {
+          const selected = colorScheme === value;
+          return (
+            <Pressable
+              key={value}
+              onPress={() => void setColorScheme(value)}
+              style={[styles.option, selected && styles.optionSelected]}
+            >
+              <Text
+                style={[styles.optionText, selected && styles.optionTextSelected]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text style={[styles.sectionLabel, styles.sectionGap]}>Logging</Text>
+      <View style={styles.toggleRow}>
+        <View style={styles.toggleCopy}>
+          <Text style={styles.toggleTitle}>Energy level</Text>
+          <Text style={styles.toggleHelp}>
+            Show a 1–10 scale when logging a workout.
+          </Text>
+        </View>
+        <Switch
+          value={trackEnergyLevel}
+          onValueChange={(value) => void setTrackEnergyLevel(value)}
+          trackColor={{
+            false: theme.colors.border,
+            true: theme.colors.accent,
+          }}
+          thumbColor={theme.colors.surface}
+        />
+      </View>
+
       <Text style={[styles.sectionLabel, styles.sectionGap]}>Locations</Text>
       <Text style={styles.helpTop}>
         Saved places appear as chips when logging a workout. You can still type a
@@ -239,7 +293,8 @@ export function SettingsScreen(_props: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -283,6 +338,26 @@ const styles = StyleSheet.create({
   },
   help: {
     marginTop: theme.spacing.md,
+    fontFamily: theme.fonts.sans,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.mutedForeground,
+    lineHeight: 20,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  toggleCopy: {
+    flex: 1,
+  },
+  toggleTitle: {
+    fontFamily: theme.fonts.sansMedium,
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.foreground,
+    marginBottom: 4,
+  },
+  toggleHelp: {
     fontFamily: theme.fonts.sans,
     fontSize: theme.fontSizes.sm,
     color: theme.colors.mutedForeground,
@@ -379,3 +454,4 @@ const styles = StyleSheet.create({
     color: theme.colors.accentForeground,
   },
 });
+}

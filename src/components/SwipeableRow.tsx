@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactNode } from 'react';
 import {
   Animated,
   PanResponder,
@@ -10,7 +10,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { theme } from '../theme';
+import { useTheme } from '../context/SettingsContext';
+import type { AppTheme } from '../theme';
 
 const ACTION_WIDTH = 88;
 const OPEN_THRESHOLD = ACTION_WIDTH * 0.35;
@@ -23,6 +24,8 @@ type Props = {
 };
 
 export function SwipeableRow({ children, onDelete, onPress, style }: Props) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const translateX = useRef(new Animated.Value(0)).current;
   const startX = useRef(0);
   const currentX = useRef(0);
@@ -145,29 +148,31 @@ export function SwipeableRow({ children, onDelete, onPress, style }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-    backgroundColor: theme.colors.background,
-  },
-  actions: {
-    ...StyleSheet.absoluteFill,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'stretch',
-  },
-  deleteBtn: {
-    width: ACTION_WIDTH,
-    backgroundColor: theme.colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteText: {
-    fontFamily: theme.fonts.sansMedium,
-    fontSize: theme.fontSizes.sm,
-    color: theme.colors.accentForeground,
-  },
-  foreground: {
-    backgroundColor: theme.colors.background,
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      overflow: 'hidden',
+      backgroundColor: theme.colors.background,
+    },
+    actions: {
+      ...StyleSheet.absoluteFill,
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'stretch',
+    },
+    deleteBtn: {
+      width: ACTION_WIDTH,
+      backgroundColor: theme.colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteText: {
+      fontFamily: theme.fonts.sansMedium,
+      fontSize: theme.fontSizes.sm,
+      color: theme.colors.accentForeground,
+    },
+    foreground: {
+      backgroundColor: theme.colors.background,
+    },
+  });
+}

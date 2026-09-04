@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useTheme } from '../context/SettingsContext';
 import type { WorkoutSet } from '../db/types';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 
 type Props = {
   set: WorkoutSet;
@@ -65,6 +66,8 @@ export function parseSetShorthand(
 }
 
 export function SetRow({ set, onChange, onRemove }: Props) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [weightText, setWeightText] = useState(displayWeight(set.weight));
   const [repsText, setRepsText] = useState(displayReps(set.reps));
 
@@ -127,47 +130,49 @@ export function SetRow({ set, onChange, onRemove }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: 6,
-  },
-  index: {
-    width: 24,
-    fontFamily: theme.fonts.mono,
-    fontSize: theme.fontSizes.md,
-    color: theme.colors.mutedForeground,
-  },
-  input: {
-    flex: 1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 10,
-    fontFamily: theme.fonts.mono,
-    fontSize: theme.fontSizes.md,
-    color: theme.colors.foreground,
-    textAlign: 'center',
-  },
-  times: {
-    fontFamily: theme.fonts.sans,
-    fontSize: theme.fontSizes.md,
-    color: theme.colors.mutedForeground,
-  },
-  remove: {
-    width: 28,
-    alignItems: 'center',
-  },
-  removeSpacer: {
-    width: 28,
-  },
-  removeText: {
-    fontFamily: theme.fonts.sans,
-    fontSize: theme.fontSizes.sm,
-    color: theme.colors.mutedForeground,
-  },
-});
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      paddingVertical: 6,
+    },
+    index: {
+      width: 24,
+      fontFamily: theme.fonts.mono,
+      fontSize: theme.fontSizes.md,
+      color: theme.colors.mutedForeground,
+    },
+    input: {
+      flex: 1,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.sm,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 10,
+      fontFamily: theme.fonts.mono,
+      fontSize: theme.fontSizes.md,
+      color: theme.colors.foreground,
+      textAlign: 'center',
+    },
+    times: {
+      fontFamily: theme.fonts.sans,
+      fontSize: theme.fontSizes.md,
+      color: theme.colors.mutedForeground,
+    },
+    remove: {
+      width: 28,
+      alignItems: 'center',
+    },
+    removeSpacer: {
+      width: 28,
+    },
+    removeText: {
+      fontFamily: theme.fonts.sans,
+      fontSize: theme.fontSizes.sm,
+      color: theme.colors.mutedForeground,
+    },
+  });
+}

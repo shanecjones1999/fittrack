@@ -17,6 +17,7 @@ type WorkoutRow = {
   start_time: string | null;
   label: string;
   location: string | null;
+  energy_level: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -29,6 +30,7 @@ function mapWorkout(row: WorkoutRow): WorkoutDay {
     startTime: row.start_time,
     label: row.label,
     location: row.location,
+    energyLevel: row.energy_level,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -107,6 +109,7 @@ export async function createWorkout(
     startTime: nowTime(),
     label: input?.label ?? '',
     location: input?.location ?? null,
+    energyLevel: null,
     notes: null,
     createdAt: now,
     updatedAt: now,
@@ -114,13 +117,14 @@ export async function createWorkout(
 
   await db.runAsync(
     `INSERT INTO workout_days
-      (id, date, start_time, label, location, notes, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, date, start_time, label, location, energy_level, notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     workout.id,
     workout.date,
     workout.startTime,
     workout.label,
     workout.location,
+    workout.energyLevel,
     workout.notes,
     workout.createdAt,
     workout.updatedAt
@@ -133,7 +137,10 @@ export async function updateWorkout(
   db: SQLiteDatabase,
   id: string,
   patch: Partial<
-    Pick<WorkoutDay, 'date' | 'startTime' | 'label' | 'location' | 'notes'>
+    Pick<
+      WorkoutDay,
+      'date' | 'startTime' | 'label' | 'location' | 'energyLevel' | 'notes'
+    >
   >
 ): Promise<void> {
   const current = await getWorkout(db, id);
@@ -146,18 +153,21 @@ export async function updateWorkout(
     startTime: patch.startTime !== undefined ? patch.startTime : current.startTime,
     label: patch.label ?? current.label,
     location: patch.location !== undefined ? patch.location : current.location,
+    energyLevel:
+      patch.energyLevel !== undefined ? patch.energyLevel : current.energyLevel,
     notes: patch.notes !== undefined ? patch.notes : current.notes,
     updatedAt: new Date().toISOString(),
   };
 
   await db.runAsync(
     `UPDATE workout_days
-     SET date = ?, start_time = ?, label = ?, location = ?, notes = ?, updated_at = ?
+     SET date = ?, start_time = ?, label = ?, location = ?, energy_level = ?, notes = ?, updated_at = ?
      WHERE id = ?`,
     next.date,
     next.startTime,
     next.label,
     next.location,
+    next.energyLevel,
     next.notes,
     next.updatedAt,
     id

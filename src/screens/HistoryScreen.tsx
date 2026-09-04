@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,8 +20,9 @@ import {
   listWorkoutSummaries,
 } from '../db/workouts';
 import type { WorkoutDaySummary } from '../db/types';
+import { useTheme } from '../context/SettingsContext';
 import type { RootStackParamList } from '../navigation/types';
-import { theme } from '../theme';
+import type { AppTheme } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'History'>;
 
@@ -62,6 +63,8 @@ function groupByMonth(workouts: WorkoutDaySummary[]): Section[] {
 }
 
 export function HistoryScreen({ navigation }: Props) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const db = useSQLiteContext();
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +182,8 @@ export function HistoryScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -239,3 +243,4 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedForeground,
   },
 });
+}
